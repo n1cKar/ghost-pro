@@ -1,116 +1,148 @@
+:root {
+    --neon-green: #00ff41;
+    --alert-red: #ff0000;
+    --dark-bg: #050505;
+    --crt-glow: rgba(0, 255, 65, 0.2);
+}
+
 body {
+    background-color: var(--dark-bg);
+    color: var(--neon-green);
+    font-family: 'Courier New', Courier, monospace;
     margin: 0;
-    background: black;
-    font-family: Arial, sans-serif;
-    color: #00ffc3;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     overflow: hidden;
 }
 
-/* HUD Panel */
-.hud {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    right: 10px;
-    backdrop-filter: blur(10px);
-    background: rgba(0, 0, 0, 0.4);
-    border: 1px solid rgba(0, 255, 195, 0.2);
-    padding: 15px;
-    border-radius: 12px;
+.scanline {
+    width: 100%;
+    height: 100px;
     z-index: 10;
-}
-
-h1 {
-    font-size: 18px;
-    margin: 0;
-}
-
-#status {
-    font-size: 14px;
-    color: #ff4d4d;
-}
-
-/* Button */
-button {
-    margin-top: 10px;
-    width: 100%;
-    padding: 12px;
-    border: none;
-    border-radius: 10px;
-    background: #00ffc3;
-    color: black;
-    font-weight: bold;
-    font-size: 16px;
-}
-
-/* Radar */
-.radar {
+    background: linear-gradient(0deg, rgba(0, 0, 0, 0) 0%, rgba(0, 255, 65, 0.05) 50%, rgba(0, 0, 0, 0) 100%);
     position: absolute;
-    bottom: 20px;
-    right: 20px;
-    width: 140px;
-    height: 140px;
+    bottom: 100%;
+    animation: scanline 6s linear infinite;
+    pointer-events: none;
+}
+
+@keyframes scanline {
+    0% {
+        bottom: 100%;
+    }
+
+    100% {
+        bottom: -100%;
+    }
+}
+
+.ui-container {
+    width: 90%;
+    max-width: 400px;
+    border: 2px solid var(--neon-green);
+    padding: 20px;
+    background: rgba(0, 15, 0, 0.95);
+    box-shadow: 0 0 25px var(--crt-glow);
+}
+
+header {
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid var(--neon-green);
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+.status-led {
+    width: 12px;
+    height: 12px;
+    background: #330000;
     border-radius: 50%;
-    border: 2px solid #00ffc3;
+    margin-right: 15px;
+    transition: 0.3s;
+}
+
+.status-led.active {
+    background: var(--alert-red);
+    box-shadow: 0 0 10px var(--alert-red);
+    animation: blink 1s infinite;
+}
+
+@keyframes blink {
+    50% {
+        opacity: 0.3;
+    }
+}
+
+.visualizer-box {
+    position: relative;
+    height: 160px;
+    background: #000;
+    border: 1px solid var(--neon-green);
+    margin-bottom: 15px;
     overflow: hidden;
 }
 
-.ring {
-    position: absolute;
+#canvas {
     width: 100%;
     height: 100%;
-    border: 1px solid rgba(0, 255, 195, 0.2);
-    border-radius: 50%;
 }
 
-.sweep {
+.grid-overlay {
     position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
-    background: conic-gradient(rgba(0, 255, 195, 0.5), transparent);
-    animation: rotate 2s linear infinite;
+    background-image: linear-gradient(var(--crt-glow) 1px, transparent 1px), linear-gradient(90deg, var(--crt-glow) 1px, transparent 1px);
+    background-size: 25px 25px;
+    pointer-events: none;
 }
 
-@keyframes rotate {
-    100% {
-        transform: rotate(360deg);
-    }
+.readout {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.7rem;
+    margin-bottom: 20px;
+    border: 1px solid #004411;
+    padding: 5px;
 }
 
-/* Blip */
-#blip {
-    position: absolute;
-    width: 8px;
-    height: 8px;
-    background: red;
-    border-radius: 50%;
-    top: 50%;
-    left: 50%;
-    opacity: 0;
+.controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
 }
 
-/* Glitch */
-.glitch {
-    animation: glitch 0.2s infinite;
+button {
+    background: transparent;
+    border: 1px solid var(--neon-green);
+    color: var(--neon-green);
+    padding: 12px;
+    font-family: inherit;
+    font-size: 0.8rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s;
 }
 
-@keyframes glitch {
-    0% {
-        transform: translate(2px, -2px);
-    }
-
-    50% {
-        transform: translate(-2px, 2px);
-    }
-
-    100% {
-        transform: translate(0, 0);
-    }
+button:active {
+    background: var(--neon-green);
+    color: #000;
 }
 
-/* Mobile fix */
-canvas {
-    width: 100vw !important;
-    height: 100vh !important;
-    object-fit: cover;
+button:disabled {
+    opacity: 0.2;
+    cursor: not-allowed;
+}
+
+#log {
+    margin-top: 15px;
+    font-size: 0.65rem;
+    height: 45px;
+    border-top: 1px dashed var(--neon-green);
+    padding-top: 10px;
+    line-height: 1.2;
 }

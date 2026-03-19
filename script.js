@@ -1,91 +1,127 @@
-let video;
-let poseNet;
-let poses = [];
-let scanning = false;
+const startBtn = document.getElementById('startBtn');
+const scanBtn = document.getElementById('scanBtn');
+const led = document.getElementById('led');
+const log = document.getElementById('log');
+const freqDisplay = document.getElementById('freq');
+const statusDisplay = document.getElementById('status');
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
 
-let statusText = document.getElementById("status");
-let scanBtn = document.getElementById("scanBtn");
-let blip = document.getElementById("blip");
+let audioCtx, analyser, dataArray, source, gainNode, ghostFilter;
+let threshold = 255;
+let isCalibrating = false;
 
-scanBtn.onclick = () => {
-    scanning = true;
-    statusText.innerText = "Scanning...";
+startBtn.onclick = async () => {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        initAudio(stream);
+
+        startBtn.disabled = true;
+        scanBtn.disabled = false;
+        statusDisplay.innerText = "CALIBRATING";
+
+        isCalibrating = true;
+        led.style.background = "#ffff00"; // Yellow during cal
+        log.innerText = "CALIBRATING TO ROOM NOISE FLOOR... DO NOT MOVE.";
+
+        setTimeout(() => {
+            isCalibrating = false;
+            led.classList.add('active');
+            statusDisplay.innerText = "ACTIVE";
+            log.innerText = "CALIBRATION COMPLETE. SCANNER ARMED.";
+        }, 5000);
+
+    } catch (err) {
+        log.innerText = "ERROR: SENSOR ACCESS DENIED. CHECK MIC PERMISSIONS.";
+    }
 };
 
-function setup() {
-    const canvas = createCanvas(window.innerWidth, window.innerHeight);
-    canvas.parent("canvas-container");
+function initAudio(stream) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    source = audioCtx.createMediaStreamSource(stream);
+    analyser = audioCtx.createAnalyser();
+    ghostFilter = audioCtx.createBiquadFilter();
+    gainNode = audioCtx.createGain();
 
-    video = createCapture({
-        video: {
-            facingMode: "environment" // BACK CAMERA for phones
-        },
-        audio: false
-    });
+    // The Filter: Focus on High Frequency
+    ghostFilter.type = "highpass";
+    ghostFilter.frequency.value = 1000;
+    gainNode.gain.value = 2.5;
 
-    video.size(width, height);
-    video.hide();
+    source.connect(ghostFilter);
+    ghostFilter.connect(gainNode);
+    gainNode.connect(analyser);
+    gainNode.connect(audioCtx.destination); // LIVE AUDIO FEEDBACK
 
-    poseNet = ml5.poseNet(video, () => {
-        statusText.innerText = "Ready - Press Scan";
-    });
-
-    poseNet.on("pose", results => {
-        poses = results;
-    });
+    analyser.fftSize = 128;
+    dataArray = new Uint8Array(analyser.frequencyBinCount);
+    update();
 }
 
-function draw() {
-    image(video, 0, 0, width, height);
+function update() {
+    requestAnimationFrame(update);
+    analyser.getByteFrequencyData(dataArray);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    fill(0, 120);
-    rect(0, 0, width, height);
+    let currentMax = 0;
+    let maxIdx = 0;
+    const barWidth = (canvas.width / dataArray.length) * 2;
 
-    if (scanning) detect();
-}
+    for (let i = 0; i < dataArray.length; i++) {
+        const barHeight = dataArray[i] / 2;
+        ctx.fillStyle = (dataArray[i] > threshold) ? "#ff0000" : "#00ff41";
+        ctx.fillRect(i * barWidth, canvas.height - barHeight, barWidth - 2, barHeight);
 
-function detect() {
-    if (poses.length > 0) {
-        let confidence = poses[0].pose.score;
-
-        if (confidence < 0.5) {
-            ghostDetected();
-        } else {
-            statusText.innerText = "Human detected";
-            document.body.classList.remove("glitch");
+        if (dataArray[i] > currentMax) {
+            currentMax = dataArray[i];
+            maxIdx = i;
         }
-    } else {
-        // No detection = suspicious
-        if (random(1) > 0.98) {
-            ghostDetected();
-        }
+    }
+
+    if (isCalibrating) {
+        if (currentMax > 0) threshold = currentMax + 15;
+    } else if (currentMax > threshold && threshold < 255) {
+        const nyquist = audioCtx.sampleRate / 2;
+        const approxFreq = Math.round(maxIdx * (nyquist / analyser.frequencyBinCount));
+        freqDisplay.innerText = approxFreq + "Hz";
+        log.innerText = "!! SIGNAL ANOMALY DETECTED !!";
     }
 }
 
-function ghostDetected() {
-    statusText.innerText = "⚠ Unknown Entity Detected";
+// Deep Frequency Scan Logic
+scanBtn.onclick = () => {
+    log.innerText = "INITIATING DEEP FREQUENCY SCAN...";
+    scanBtn.disabled = true;
+    scanBtn.style.background = "rgba(0, 255, 65, 0.4)";
 
-    document.body.classList.add("glitch");
+    let peakVal = 0;
+    let peakIdx = 0;
 
-    // Radar blip
-    blip.style.top = Math.random() * 100 + "%";
-    blip.style.left = Math.random() * 100 + "%";
-    blip.style.opacity = 1;
+    // Snapshot the current room audio
+    for (let i = 0; i < dataArray.length; i++) {
+        if (dataArray[i] > peakVal) {
+            peakVal = dataArray[i];
+            peakIdx = i;
+        }
+    }
 
     setTimeout(() => {
-        blip.style.opacity = 0;
-    }, 500);
+        scanBtn.disabled = false;
+        scanBtn.style.background = "transparent";
 
-    // Flash effect
-    if (random(1) > 0.7) {
-        background(255);
-    }
+        if (peakVal < (threshold - 5)) {
+            log.innerText = "SCAN RESULT: INCONCLUSIVE. SIGNAL TOO WEAK.";
+        } else {
+            let entityClass = "";
+            if (peakIdx < 10) entityClass = "CLASS I: RESIDUAL ENERGY";
+            else if (peakIdx < 35) entityClass = "CLASS III: POLYTERGEIST";
+            else entityClass = "CLASS V: INTELLIGENT VAPOR";
 
-    // Optional sound
-    // playSound();
-}
+            log.innerText = `SUCCESS: ${entityClass}\nENERGY LEVEL: ${peakVal}`;
 
-function playSound() {
-    let audio = new Audio("sounds/alert.mp3");
-    audio.play();
-}
+            // Visual trigger flash
+            led.style.background = "#fff";
+            setTimeout(() => { led.style.background = ""; led.classList.add('active'); }, 150);
+        }
+    }, 2500);
+};

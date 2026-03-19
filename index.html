@@ -3,35 +3,39 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Ghost Detector PRO</title>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S.B.1 | Ghost Detector</title>
     <link rel="stylesheet" href="style.css">
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
-    <script src="https://unpkg.com/ml5@latest/dist/ml5.min.js"></script>
 </head>
 
 <body>
+    <div class="scanline"></div>
+    <div class="ui-container">
+        <header>
+            <div class="status-led" id="led"></div>
+            <h1>EVP ANALYZER <span class="version">v3.0</span></h1>
+        </header>
 
-    <div class="hud">
-        <h1>👻 Ghost Detector</h1>
-        <p id="status">Initializing...</p>
+        <main>
+            <div class="visualizer-box">
+                <canvas id="canvas"></canvas>
+                <div class="grid-overlay"></div>
+            </div>
 
-        <button id="scanBtn">START SCAN</button>
+            <div class="readout">
+                <div class="data-point">FREQ: <span id="freq">0Hz</span></div>
+                <div class="data-point">SENS: <span id="sens">AUTO</span></div>
+                <div class="data-point">STATUS: <span id="status">OFFLINE</span></div>
+            </div>
+        </main>
+
+        <nav class="controls">
+            <button id="startBtn">Initialize Sensors</button>
+            <button id="scanBtn" disabled>Deep Frequency Scan</button>
+        </nav>
+
+        <div id="log">SYSTEM READY... STANDBY FOR CALIBRATION.</div>
     </div>
-
-    <div id="canvas-container"></div>
-
-    <!-- Radar -->
-    <div class="radar">
-        <div class="ring"></div>
-        <div class="ring"></div>
-        <div class="ring"></div>
-        <div class="sweep"></div>
-        <div id="blip"></div>
-    </div>
-
     <script src="script.js"></script>
 </body>
 
