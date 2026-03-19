@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Ghost Detector PRO</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+    <script src="https://unpkg.com/ml5@latest/dist/ml5.min.js"></script>
+</head>
+
+<body>
+
+    <div class="hud">
+        <h1>👻 Ghost Detector</h1>
+        <p id="status">Initializing...</p>
+
+        <button id="scanBtn">START SCAN</button>
+    </div>
+
+    <div id="canvas-container"></div>
+
+    <!-- Radar -->
+    <div class="radar">
+        <div class="ring"></div>
+        <div class="ring"></div>
+        <div class="ring"></div>
+        <div class="sweep"></div>
+        <div id="blip"></div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
